@@ -43,6 +43,14 @@ sh install-ventstreamctl.sh
 rm install-ventstreamctl.sh
 ```
 
+You can also pin both the installer source and binary version:
+
+```sh
+curl -fsSL \
+  https://raw.githubusercontent.com/ventstream/ventstream-releases/v0.2.8/install.sh |
+  VENTSTREAMCTL_VERSION=0.2.8 sh
+```
+
 Windows users can download the versioned AMD64 ZIP from
 [GitHub Releases](https://github.com/ventstream/ventstream-releases/releases).
 
