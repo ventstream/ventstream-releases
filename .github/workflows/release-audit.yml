@@ -1,0 +1,109 @@
+name: Release audit
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: immutable release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate release tag
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -eu
+          case "$TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "Invalid release tag: $TAG" >&2; exit 1 ;;
+          esac
+          VERSION="${TAG#v}"
+          if ! printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Release tag must be strict semantic version: $TAG" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir assets
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir assets
+
+      - name: Require exact public artifact set
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          cat > expected-assets <<EOF
+          SHA256SUMS
+          release-manifest.json
+          ventstreamctl-${VERSION}-darwin-amd64.spdx.json
+          ventstreamctl-${VERSION}-darwin-amd64.tar.gz
+          ventstreamctl-${VERSION}-darwin-arm64.spdx.json
+          ventstreamctl-${VERSION}-darwin-arm64.tar.gz
+          ventstreamctl-${VERSION}-linux-amd64.spdx.json
+          ventstreamctl-${VERSION}-linux-amd64.tar.gz
+          ventstreamctl-${VERSION}-linux-arm64.spdx.json
+          ventstreamctl-${VERSION}-linux-arm64.tar.gz
+          ventstreamctl-${VERSION}-windows-amd64.spdx.json
+          ventstreamctl-${VERSION}-windows-amd64.zip
+          EOF
+          find assets -maxdepth 1 -type f -exec basename {} \; | sort > actual-assets
+          diff -u expected-assets actual-assets
+
+      - name: Verify checksums and manifest
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          cd assets
+          test "$(wc -l < SHA256SUMS)" -eq 11
+          sha256sum --check SHA256SUMS
+          jq -e \
+            --arg version "$VERSION" \
+            --arg tag "$TAG" \
+            '.schema_version == 1 and
+             .version == $version and
+             .tag == $tag and
+             (.fleet_revision | test("^[0-9a-f]{40}$")) and
+             (.engine_revision | test("^[0-9a-f]{40}$"))' \
+            release-manifest.json >/dev/null
+          for sbom in *.spdx.json; do
+            jq -e \
+              '.spdxVersion | startswith("SPDX-")' \
+              "$sbom" >/dev/null
+          done
+
+      - name: Inspect archive contents
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          cd assets
+          for archive in ventstreamctl-"$VERSION"-*.tar.gz; do
+            test "$(tar -tzf "$archive")" = "ventstreamctl"
+          done
+          test "$(unzip -Z1 "ventstreamctl-$VERSION-windows-amd64.zip")" = "ventstreamctl.exe"
+
+      - name: Execute Linux AMD64 binary
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          tar -xzf \
+            "assets/ventstreamctl-$VERSION-linux-amd64.tar.gz" \
+            -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/ventstreamctl" --version | grep -F "$VERSION"

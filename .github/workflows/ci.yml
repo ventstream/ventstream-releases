@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: installer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Check installer syntax
+        run: sh -n install.sh
+
+      - name: Lint installer
+        run: shellcheck install.sh
+
+      - name: Enforce installer safety properties
+        run: |
+          set -eu
+          if grep -En '(^|[[:space:]])(sudo|eval)([[:space:]]|$)' install.sh; then
+            echo "Installer must not invoke sudo or eval" >&2
+            exit 1
+          fi
+          grep -Fq -- "--proto '=https'" install.sh
+          grep -Fq 'verify_checksum' install.sh
+          grep -Fq 'verify_archive' install.sh
