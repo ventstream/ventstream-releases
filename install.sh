@@ -1,10 +1,12 @@
 #!/bin/sh
 
 set -eu
+umask 022
 
 REPOSITORY="ventstream/ventstream-releases"
 INSTALL_DIR="${VENTSTREAMCTL_INSTALL_DIR:-$HOME/.local/bin}"
 REQUESTED_VERSION="${VENTSTREAMCTL_VERSION:-latest}"
+STAGED_FILE=""
 
 fail() {
   printf 'ventstreamctl installer: %s\n' "$*" >&2
@@ -20,6 +22,9 @@ require_command() {
 }
 
 cleanup() {
+  if [ -n "$STAGED_FILE" ] && [ -f "$STAGED_FILE" ]; then
+    rm -f "$STAGED_FILE"
+  fi
   if [ -n "${TEMP_DIR:-}" ] && [ -d "$TEMP_DIR" ]; then
     rm -rf "$TEMP_DIR"
   fi
@@ -43,6 +48,7 @@ resolve_latest_version() {
   effective_url=$(
     curl --fail --silent --show-error --location \
       --retry 3 --retry-delay 1 --retry-all-errors \
+      --proto '=https' --tlsv1.2 \
       --output /dev/null --write-out '%{url_effective}' \
       "https://github.com/$REPOSITORY/releases/latest"
   ) || fail "could not resolve the latest release"
@@ -122,20 +128,20 @@ install_binary() {
   chmod 755 "$TEMP_DIR/ventstreamctl"
   reported_version=$("$TEMP_DIR/ventstreamctl" --version 2>/dev/null) ||
     fail "downloaded binary did not execute"
-  case "$reported_version" in
-    *"$VERSION"*) ;;
-    *) fail "binary version did not match requested version $VERSION" ;;
-  esac
+  [ "$reported_version" = "ventstreamctl $VERSION" ] ||
+    fail "binary version did not match requested version $VERSION"
 
   mkdir -p "$INSTALL_DIR"
   [ -d "$INSTALL_DIR" ] || fail "install path is not a directory: $INSTALL_DIR"
   [ -w "$INSTALL_DIR" ] || fail "install directory is not writable: $INSTALL_DIR"
 
   destination="$INSTALL_DIR/ventstreamctl"
-  staged="$INSTALL_DIR/.ventstreamctl.new.$$"
-  cp "$TEMP_DIR/ventstreamctl" "$staged"
-  chmod 755 "$staged"
-  mv -f "$staged" "$destination"
+  STAGED_FILE=$(mktemp "$INSTALL_DIR/.ventstreamctl.new.XXXXXXXX") ||
+    fail "could not create an install staging file"
+  cp "$TEMP_DIR/ventstreamctl" "$STAGED_FILE"
+  chmod 755 "$STAGED_FILE"
+  mv -f "$STAGED_FILE" "$destination"
+  STAGED_FILE=""
 
   printf 'Installed ventstreamctl %s to %s\n' "$VERSION" "$destination"
   case ":${PATH:-}:" in

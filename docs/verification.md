@@ -31,9 +31,10 @@ grep " $ASSET\$" SHA256SUMS | sha256sum -c -
 
 ## Verify GitHub release integrity
 
-With a current GitHub CLI:
+With a current, authenticated GitHub CLI:
 
 ```sh
+gh auth login
 gh release verify v0.2.8 --repo ventstream/ventstream-releases
 gh release verify-asset v0.2.8 \
   ventstreamctl-0.2.8-darwin-arm64.tar.gz \
