@@ -78,8 +78,7 @@ jobs:
             '.schema_version == 1 and
              .version == $version and
              .tag == $tag and
-             (.fleet_revision | test("^[0-9a-f]{40}$")) and
-             (.engine_revision | test("^[0-9a-f]{40}$"))' \
+             (.cli_revision | test("^[0-9a-f]{40}$"))' \
             release-manifest.json >/dev/null
           for sbom in *.spdx.json; do
             jq -e \
