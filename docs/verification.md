@@ -6,7 +6,7 @@ Every release includes:
 - An SPDX JSON SBOM for each archive.
 - `SHA256SUMS` covering every uploaded distribution artifact and the release
   manifest.
-- `release-manifest.json` recording the Fleet and engine revisions.
+- `release-manifest.json` recording version and build provenance.
 - A GitHub release attestation created when the immutable release is published.
 
 ## Verify a downloaded archive

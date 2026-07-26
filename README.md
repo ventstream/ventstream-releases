@@ -1,12 +1,8 @@
 # VentStream releases
 
-This repository is the public, binary-only distribution point for
-`ventstreamctl`. It contains installation tooling, release checksums, software
-bills of materials (SBOMs), and immutable GitHub releases.
-
-The Fleet control-plane source remains private. The VentStream engine source is
-available from [ventstream/ventstream](https://github.com/ventstream/ventstream).
-Publishing a binary here does not grant a license to private source code.
+This repository is the official distribution point for `ventstreamctl`. It
+contains installation tooling, release checksums, software bills of materials
+(SBOMs), and immutable GitHub releases.
 
 ## Install
 
@@ -62,11 +58,4 @@ their tag and assets and generates a release attestation.
 
 See [docs/verification.md](docs/verification.md) for manual verification.
 
-## Scope
-
-This repository deliberately contains no control-plane implementation,
-deployment credentials, customer configuration, or private build reports.
-Release promotion is documented in [docs/promotion.md](docs/promotion.md).
-
-Security issues must be reported privately as described in
-[SECURITY.md](SECURITY.md).
+Security issues must be reported as described in [SECURITY.md](SECURITY.md).
