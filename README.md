@@ -4,9 +4,6 @@ This repository is the official distribution point for `ventstreamctl`. It
 contains installation tooling, release checksums, software bills of materials
 (SBOMs), and immutable GitHub releases.
 
-No GitHub account, access token, or access to the private Fleet source
-repository is required to download or install the CLI.
-
 ## Install
 
 Install the latest CLI on macOS or Linux:
@@ -16,11 +13,11 @@ curl -fsSL https://raw.githubusercontent.com/ventstream/ventstream-releases/main
 ```
 
 The installer writes to `$HOME/.local/bin` by default. It does not invoke
-`sudo`, edit shell profiles, or send GitHub credentials.
+`sudo` or edit shell profiles.
 
 Supported archives are published for macOS (`arm64`, `amd64`), Linux (`arm64`,
 `amd64`), and Windows (`amd64`). Rerun the installer to upgrade macOS or Linux
-to the latest public release.
+to the latest release.
 
 Install a specific version:
 

@@ -31,9 +31,8 @@ grep " $ASSET\$" SHA256SUMS | sha256sum -c -
 
 ## Verify GitHub release integrity
 
-This optional high-assurance check uses an authenticated GitHub CLI to verify
-GitHub's immutable-release attestation. Authentication is not required for the
-normal installer or direct archive downloads.
+Use an authenticated GitHub CLI to verify GitHub's immutable-release
+attestation:
 
 ```sh
 gh auth login
