@@ -78,8 +78,16 @@ jobs:
         run: |
           set -eu
           cd assets
-          test "$(wc -l < SHA256SUMS)" -eq 11
-          sha256sum --check SHA256SUMS
+          # SHA256SUMS is the upstream release's checksum file carried
+          # verbatim so its sigstore bundle keeps verifying bit-for-bit.
+          # It also lists upstream assets that are not mirrored here, so
+          # verify exactly the mirrored artifacts against it.
+          for artifact in ventstreamctl-* release-manifest.json; do
+            line="$(awk -v name="$artifact" \
+              '$2 == name || $2 == "./" name { print }' SHA256SUMS)"
+            test "$(printf '%s\n' "$line" | grep -c .)" -eq 1
+            printf '%s\n' "$line" | sed 's# \./# #' | sha256sum --check --strict -
+          done
           jq -e \
             --arg version "$VERSION" \
             --arg tag "$TAG" \
