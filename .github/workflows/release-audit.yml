@@ -48,6 +48,9 @@ jobs:
           set -eu
           cat > expected-assets <<EOF
           SHA256SUMS
+          SHA256SUMS.sigstore.json
+          install-cli.ps1
+          install-cli.sh
           release-manifest.json
           ventstreamctl-${VERSION}-darwin-amd64.spdx.json
           ventstreamctl-${VERSION}-darwin-amd64.tar.gz
