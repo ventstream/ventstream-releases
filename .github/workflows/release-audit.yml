@@ -88,13 +88,14 @@ jobs:
             test "$(printf '%s\n' "$line" | grep -c .)" -eq 1
             printf '%s\n' "$line" | sed 's# \./# #' | sha256sum --check --strict -
           done
+          # The manifest is the upstream release's, carried verbatim:
+          # version + source revision + pinned engine version/revision.
           jq -e \
             --arg version "$VERSION" \
-            --arg tag "$TAG" \
-            '.schema_version == 1 and
-             .version == $version and
-             .tag == $tag and
-             (.cli_revision | test("^[0-9a-f]{40}$"))' \
+            '.version == $version and
+             (.fleet_revision | test("^[0-9a-f]{40}$")) and
+             (.engine_revision | test("^[0-9a-f]{40}$")) and
+             (.engine_version | test("^[0-9]+[.][0-9]+[.][0-9]+$"))' \
             release-manifest.json >/dev/null
           for sbom in *.spdx.json; do
             jq -e \
